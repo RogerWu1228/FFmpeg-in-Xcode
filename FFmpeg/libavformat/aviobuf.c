@@ -654,6 +654,8 @@ int avio_read(AVIOContext *s, unsigned char *buf, int size)
         if (len == 0 || s->write_flag) {
             if((s->direct || size > s->buffer_size) && !s->update_checksum) {
                 // bypass the buffer and read data directly into buf
+                
+                //AV_READ_FRAME_LOG 
                 len = read_packet_wrapper(s, buf, size);
                 if (len == AVERROR_EOF) {
                     /* do not modify buffer if EOF reached so that a seek back can
@@ -940,6 +942,7 @@ uint64_t ffio_read_varlen(AVIOContext *bc){
 static int io_read_packet(void *opaque, uint8_t *buf, int buf_size)
 {
     AVIOInternal *internal = opaque;
+    //AV_READ_FRAME_LOG 
     return ffurl_read(internal->h, buf, buf_size);
 }
 

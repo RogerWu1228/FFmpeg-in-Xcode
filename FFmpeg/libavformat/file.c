@@ -106,6 +106,8 @@ static const AVClass pipe_class = {
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
+
+//AV_READ_FRAME_LOG 从文件中读取 buf
 static int file_read(URLContext *h, unsigned char *buf, int size)
 {
     FileContext *c = h->priv_data;

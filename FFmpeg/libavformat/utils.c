@@ -290,6 +290,7 @@ static int append_packet_chunked(AVIOContext *s, AVPacket *pkt, int size)
         if (ret < 0)
             break;
 
+        //AV_READ_FRAME_LOG IO层入口
         ret = avio_read(s, pkt->data + prev_size, read_size);
         if (ret != read_size) {
             av_shrink_packet(pkt, prev_size + FFMAX(ret, 0));
@@ -570,6 +571,7 @@ FF_DISABLE_DEPRECATION_WARNINGS
     av_strlcpy(s->filename, filename ? filename : "", sizeof(s->filename));
 FF_ENABLE_DEPRECATION_WARNINGS
 #endif
+    //核心方法 init_input
     if ((ret = init_input(s, filename, &tmp)) < 0)
         goto fail;
     s->probe_score = ret;

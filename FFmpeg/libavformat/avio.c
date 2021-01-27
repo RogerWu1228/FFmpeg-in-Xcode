@@ -373,6 +373,7 @@ static inline int retry_transfer_wrapper(URLContext *h, uint8_t *buf,
     while (len < size_min) {
         if (ff_check_interrupt(&h->interrupt_callback))
             return AVERROR_EXIT;
+        //AV_READ_FRAME_LOG
         ret = transfer_func(h, buf + len, size - len);
         if (ret == AVERROR(EINTR))
             continue;
@@ -404,6 +405,7 @@ static inline int retry_transfer_wrapper(URLContext *h, uint8_t *buf,
     return len;
 }
 
+//AV_READ_FRAME_LOG IO层
 int ffurl_read(URLContext *h, unsigned char *buf, int size)
 {
     if (!(h->flags & AVIO_FLAG_READ))
