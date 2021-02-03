@@ -1002,6 +1002,7 @@ int ffio_fdopen(AVIOContext **s, URLContext *h)
 
     internal->h = h;
 
+    //传入三个关键函数: read / write / seek
     *s = avio_alloc_context(buffer, buffer_size, h->flags & AVIO_FLAG_WRITE,
                             internal, io_read_packet, io_write_packet, io_seek);
     if (!*s)
@@ -1158,17 +1159,22 @@ int avio_open(AVIOContext **s, const char *filename, int flags)
     return avio_open2(s, filename, flags, NULL, NULL);
 }
 
+
+//发起网络的q播放才会走到这里, file 协议不会走到这里? 
 int ffio_open_whitelist(AVIOContext **s, const char *filename, int flags,
                          const AVIOInterruptCB *int_cb, AVDictionary **options,
                          const char *whitelist, const char *blacklist
                         )
 {
+    
+    //创建URLContext对象,并通过ffurl_open_whitelist 赋值
     URLContext *h;
     int err;
-
     err = ffurl_open_whitelist(&h, filename, flags, int_cb, options, whitelist, blacklist, NULL);
     if (err < 0)
         return err;
+    
+    //根据上面得到的 URLContext 创建并初始化 AVIOContext
     err = ffio_fdopen(s, h);
     if (err < 0) {
         ffurl_close(h);

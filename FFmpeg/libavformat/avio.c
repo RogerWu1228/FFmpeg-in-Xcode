@@ -70,6 +70,8 @@ const AVClass ffurl_context_class = {
 };
 /*@}*/
 
+
+//至此, URLContext 以及其内部的 URLProtocol成员都 初始完毕!!!
 static int url_alloc_for_protocol(URLContext **puc, const URLProtocol *up,
                                   const char *filename, int flags,
                                   const AVIOInterruptCB *int_cb)
@@ -163,6 +165,7 @@ fail:
     return err;
 }
 
+//发起网络连接
 int ffurl_connect(URLContext *uc, AVDictionary **options)
 {
     int err;
@@ -248,6 +251,7 @@ int ffurl_handshake(URLContext *c)
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"                \
     "0123456789+-."
 
+//根据文件名称查找对应的 URLProtocol
 static const struct URLProtocol *url_find_protocol(const char *filename)
 {
     const URLProtocol **protocols;
@@ -292,10 +296,12 @@ int ffurl_alloc(URLContext **puc, const char *filename, int flags,
 {
     const URLProtocol *p = NULL;
 
+    //核心函数:根据文件名 找到协议类型
     p = url_find_protocol(filename);
     if (p)
        return url_alloc_for_protocol(puc, p, filename, flags, int_cb);
 
+    
     *puc = NULL;
     if (av_strstart(filename, "https:", NULL) || av_strstart(filename, "tls:", NULL))
         av_log(NULL, AV_LOG_WARNING, "https protocol not found, recompile FFmpeg with "
@@ -311,11 +317,15 @@ int ffurl_open_whitelist(URLContext **puc, const char *filename, int flags,
 {
     AVDictionary *tmp_opts = NULL;
     AVDictionaryEntry *e;
+    
+    //根据文件名, 找到对应的协议
     int ret = ffurl_alloc(puc, filename, flags, int_cb);
     if (ret < 0)
         return ret;
+    
     if (parent)
         av_opt_copy(*puc, parent);
+    
     if (options &&
         (ret = av_opt_set_dict(*puc, options)) < 0)
         goto fail;
@@ -342,6 +352,7 @@ int ffurl_open_whitelist(URLContext **puc, const char *filename, int flags,
     if ((ret = av_opt_set_dict(*puc, options)) < 0)
         goto fail;
 
+    //发起连接, 此时URLContext对象已初始化完毕
     ret = ffurl_connect(*puc, options);
 
     if (!ret)
@@ -358,6 +369,9 @@ int ffurl_open(URLContext **puc, const char *filename, int flags,
     return ffurl_open_whitelist(puc, filename, flags,
                                 int_cb, options, NULL, NULL, NULL);
 }
+
+
+//AVIOContext则是在URLContext的读写函数外面加上了一层“包装”（通过retry_transfer_wrapper()函数）???
 
 static inline int retry_transfer_wrapper(URLContext *h, uint8_t *buf,
                                          int size, int size_min,
@@ -428,6 +442,7 @@ int ffurl_write(URLContext *h, const unsigned char *buf, int size)
     if (h->max_packet_size && size > h->max_packet_size)
         return AVERROR(EIO);
 
+    //调用 h->prot->url_write  函数
     return retry_transfer_wrapper(h, (unsigned char *)buf, size, size,
                                   (int (*)(struct URLContext *, uint8_t *, int))
                                   h->prot->url_write);

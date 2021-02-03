@@ -247,6 +247,8 @@ static int tcp_read(URLContext *h, uint8_t *buf, int size)
     return ret < 0 ? ff_neterrno() : ret;
 }
 
+
+//发起socket链接
 static int tcp_write(URLContext *h, const uint8_t *buf, int size)
 {
     TCPContext *s = h->priv_data;

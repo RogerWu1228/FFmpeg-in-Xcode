@@ -520,6 +520,7 @@ fail:
     return ret;
 }
 
+//第一步 打开
 static int http_open(URLContext *h, const char *uri, int flags,
                      AVDictionary **options)
 {
@@ -1124,6 +1125,7 @@ static int http_read_header(URLContext *h, int *new_location)
     s->chunksize = UINT64_MAX;
 
     for (;;) {
+        //HTTP请求报文由3部分组成（请求行+请求头+请求体）
         if ((err = http_get_line(s, line, sizeof(line))) < 0)
             return err;
 
@@ -1147,6 +1149,8 @@ static int http_read_header(URLContext *h, int *new_location)
     return err;
 }
 
+
+//第二部 连接
 static int http_connect(URLContext *h, const char *path, const char *local_path,
                         const char *hoststr, const char *auth,
                         const char *proxyauth, int *new_location)
@@ -1382,6 +1386,7 @@ static int http_buf_read(URLContext *h, uint8_t *buf, int size)
     if (len > 0) {
         if (len > size)
             len = size;
+        //读取数据
         memcpy(buf, s->buf_ptr, len);
         s->buf_ptr += len;
     } else {
@@ -1462,6 +1467,8 @@ static int http_read_stream(URLContext *h, uint8_t *buf, int size)
     if (s->compressed)
         return http_buf_read_compressed(h, buf, size);
 #endif /* CONFIG_ZLIB */
+    
+    // 从buffer中读取数据
     read_ret = http_buf_read(h, buf, size);
     while (read_ret < 0) {
         uint64_t target = h->is_streamed ? 0 : s->off;

@@ -708,6 +708,14 @@ static int mov_read_dref(MOVContext *c, AVIOContext *pb, MOVAtom atom)
     return 0;
 }
 
+/*
+ hdlr : handleer renference box.
+ Media box 类型为 media,是一个 container box, 必须包含:
+ 一个 media header box (mdhd)
+ 一个 hander reference box (hdlr)
+ 一个 媒体信息引用box (minf)
+ 一个 用户数据box (udta)
+*/
 static int mov_read_hdlr(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 {
     AVStream *st;
@@ -1367,6 +1375,7 @@ static void fix_frag_index_entries(MOVFragmentIndex *frag_index, int index,
     }
 }
 
+//moof box ，这个box是视频分片信息，并不是MP4的必须部分，但在我们可在线播放的MP4格式文件中却是重中之中
 static int mov_read_moof(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 {
     // Set by mov_read_tfhd(). mov_read_trun() will reject files missing tfhd.
@@ -2619,6 +2628,7 @@ fail:
     return ret;
 }
 
+//stsc：记录每个chunk里包含几个sample
 static int mov_read_stsc(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 {
     AVStream *st;
@@ -2882,6 +2892,7 @@ static int mov_read_stsz(MOVContext *c, AVIOContext *pb, MOVAtom atom)
     return 0;
 }
 
+//stts：记录时间戳的，每个sample持续播放的时间
 static int mov_read_stts(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 {
     AVStream *st;
@@ -4156,6 +4167,7 @@ static void fix_timescale(MOVContext *c, MOVStreamContext *sc)
     }
 }
 
+//trak -> mdia -> minf -> stbl -> stts、stsc
 static int mov_read_trak(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 {
     AVStream *st;
@@ -4438,6 +4450,8 @@ static int mov_read_meta(MOVContext *c, AVIOContext *pb, MOVAtom atom)
      !(matrix)[1][0] && !(matrix)[1][2] && \
      !(matrix)[2][0] && !(matrix)[2][1])
 
+
+//track header, overall information about the track
 static int mov_read_tkhd(MOVContext *c, AVIOContext *pb, MOVAtom atom)
 {
     int i, j, e;
@@ -6683,6 +6697,7 @@ static int mov_read_dops(MOVContext *c, AVIOContext *pb, MOVAtom atom)
     return 0;
 }
 
+//总共92个方法
 static const MOVParseTableEntry mov_default_parse_table[] = {
 { MKTAG('A','C','L','R'), mov_read_aclr },
 { MKTAG('A','P','R','G'), mov_read_avid },
@@ -6842,6 +6857,7 @@ static int mov_read_default(MOVContext *c, AVIOContext *pb, MOVAtom atom)
             break;
         a.size = FFMIN(a.size, atom.size - total_size);
 
+        //从table中获取一个个函数指针 parse
         for (i = 0; mov_default_parse_table[i].type; i++)
             if (mov_default_parse_table[i].type == a.type) {
                 parse = mov_default_parse_table[i].parse;
@@ -7335,6 +7351,7 @@ static int read_tfra(MOVContext *mov, AVIOContext *f)
     return 0;
 }
 
+//mfra box，一般在文件末尾，媒体的索引文件，可通过查询直接定位所需时间点的媒体数据
 static int mov_read_mfra(MOVContext *c, AVIOContext *f)
 {
     int64_t stream_size = avio_size(f);
@@ -7380,11 +7397,14 @@ fail:
     return ret;
 }
 
+// mov_read_default 第一次被调用 在这个方法内部
 static int mov_read_header(AVFormatContext *s)
 {
     MOVContext *mov = s->priv_data;
     AVIOContext *pb = s->pb;
     int j, err;
+    
+    //根 Atom
     MOVAtom atom = { AV_RL32("root") };
     int i;
 
@@ -7412,6 +7432,8 @@ static int mov_read_header(AVFormatContext *s)
             return err;
         }
     } while ((pb->seekable & AVIO_SEEKABLE_NORMAL) && !mov->found_moov && !mov->moov_retry++);
+    
+    
     if (!mov->found_moov) {
         av_log(s, AV_LOG_ERROR, "moov atom not found\n");
         mov_read_close(s);

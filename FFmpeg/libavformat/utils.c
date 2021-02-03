@@ -630,6 +630,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
 
 
     if (!(s->flags&AVFMT_FLAG_PRIV_OPT) && s->iformat->read_header)
+        //调用各自format的read_header 函数(多态)
         if ((ret = s->iformat->read_header(s)) < 0)
             goto fail;
 
